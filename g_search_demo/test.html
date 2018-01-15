@@ -1,0 +1,116 @@
+
+<html>
+	<head>	
+		<meta http-equiv="content-type" content="text/html;charset=utf-8">		
+        <title>test</title>
+        <style>
+            #chart{
+                width: 500px;
+                height:500px;
+            }
+            table{
+                width: 500px;
+                height:500px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="chart"></div>
+        <script>
+            var dir = [[1,0],[-1,0],[0,-1],[0,1],[-1,1],[-1,-1],[1,1],[1,-1]];//方向数组,分别表示上、下、左、右、左上、左下、右上、右下
+            //g_search是广度优先搜索
+            //d_search是深度优先搜索(下次再写)
+            function g_search(tu,w,h,i,j){//tu是一个二维矩阵,width是矩阵的单位长度，h是单位高度,其中tu[0][0]=1表示图中（0,0）这个点是第1号颜色,i,j是起始点
+                var next_i,
+                    next_j,
+                    nextPoint={},
+                    nowPoint={},//现在要处理的点
+                    flag = [],
+                    isInQueue = [],//记录在进过队列的点
+                    queue = [];//start_i是宽度的遍历索引,start_j是高度的遍历索引，其中i<w ,j<h,flag是标志图中每个点是否被访问的数组,queue是队列数组
+                //初始化标记数组为未访问
+                for(var x = 0;x < w; x++){
+                    flag[x] = [];
+                    for(var y = 0 ; y < h ; y++){
+                        flag[x][y] = false;
+                    }
+                }
+                var startPoint = {
+                    x: i,
+                    y: j,
+                    color : tu[i][j]
+                };
+                
+                flag[i][j] = true;//初始化开始点是被访问的
+                queue.push(startPoint); //队列里面初始化一个点
+                isInQueue.push(startPoint);
+                while(queue.length !== 0){//队列为空则退出
+                   nowPoint= queue.pop();
+                   i = nowPoint.x;
+                   j = nowPoint.y;
+                   for(var ii=0; ii< dir.length; ii++){
+                       next_i = i + dir[ii][0];
+                       next_j = j+ dir[ii][1];
+                       
+                       if(isLegal(next_i,next_j,w,h)){//如果相邻点（方向数组里面的八个相邻点，点不超出图的边界）颜色相同，则放进队列
+                            if(!flag[next_i][next_j]){
+                                flag[next_i][next_j] = true;
+                                if( tu[i][j] === tu[next_i][next_j]){
+                                    nextPoint = {
+                                        x: next_i,
+                                        y: next_j,
+                                        color: tu[next_i][next_j]
+                                    }
+                                    isInQueue.push(nextPoint);
+                                    queue.push(nextPoint);
+                                }   
+                            }   
+                       }
+                   }
+                }
+                for(var i=0;i<isInQueue.length;i++){//如果在队列里面，说明是一个联通块，则变颜色
+                    var obj = isInQueue[i];
+                    tu[obj.x][obj.y] = 0;
+                }
+                return tu;
+            }
+            function isLegal(x,y,w,h){
+                if(x>=0 && x<w && y>=0 && y<h){
+                    return true
+                }
+                return false
+            }
+          
+           //渲染成图
+           function createTu(tuArr,id){//生成图,id是插入的dom的id
+              var colorArr = ['#333333','#FFFAFA','#FFF68F','#FFEFD5','#FFE4E1','#FFDEAD','#FFC1C1'];//初始化六种颜色
+              var html = "<table>"
+              for(var i=0;i<tuArr.length;i++){
+                html+="<tr>";
+                for(var j=0;j<tuArr[i].length;j++){
+                    html+="<td style='background-color:"+colorArr[tuArr[i][j]]+"' x='"+i+"' y='"+ j +"'></td>"
+                }
+                html+="</tr>";
+              }
+              html+= "</table>"
+              var chart = document.getElementById("chart");
+              chart.innerHTML = html;
+              chart.onclick = clickHandler;
+           }
+           function clickHandler(e){//事件代理
+                var tar = e.target||e.srcElement;
+                var x = tar.getAttribute('x');
+                var y = tar.getAttribute('y');
+                x = !!x ? parseInt(x): null;
+                y = !!y ? parseInt(y): null;
+                if(x!=null && y!=null){
+                    createTu(g_search(testArr,testArr.length,testArr[0].length,x,y));
+                }
+           }
+
+            //测试数据
+            var testArr = [[1,1,2,3,1],[1,3,5,1,1],[2,4,2,2,1]];
+           createTu(testArr,"chart")
+        </script>
+    </body>
+</html>
