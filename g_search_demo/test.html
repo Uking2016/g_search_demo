@@ -4,37 +4,62 @@
 		<meta http-equiv="content-type" content="text/html;charset=utf-8">		
         <title>test</title>
         <style>
-            #chart{
-                width: 500px;
-                height:500px;
-            }
             table{
-                width: 500px;
-                height:500px;
+                width: 100%;
+                height: 100%;
             }
         </style>
     </head>
     <body>
         <div id="chart"></div>
         <script>
-            var dir = [[1,0],[-1,0],[0,-1],[0,1],[-1,1],[-1,-1],[1,1],[1,-1]];//方向数组,分别表示上、下、左、右、左上、左下、右上、右下
+            //var dir = [[1,0],[-1,0],[0,-1],[0,1],[-1,1],[-1,-1],[1,1],[1,-1]];//方向数组,分别表示上、下、左、右、左上、左下、右上、右下
+            var dir = [[1,0],[-1,0],[0,-1],[0,1]];//方向数组,分别表示上、下、左、右
+            var colorArr = ['#333333','#CDAA7D','#FFF68F','#FFEFD5','#FFE4E1','#FFDEAD','#FFC1C1'];//初始化六种颜色
             //g_search是广度优先搜索
-            //d_search是深度优先搜索(下次再写)
-            function g_search(tu,w,h,i,j){//tu是一个二维矩阵,width是矩阵的单位长度，h是单位高度,其中tu[0][0]=1表示图中（0,0）这个点是第1号颜色,i,j是起始点
-                var next_i,
-                    next_j,
-                    nextPoint={},
-                    nowPoint={},//现在要处理的点
-                    flag = [],
-                    isInQueue = [],//记录在进过队列的点
-                    queue = [];//start_i是宽度的遍历索引,start_j是高度的遍历索引，其中i<w ,j<h,flag是标志图中每个点是否被访问的数组,queue是队列数组
-                //初始化标记数组为未访问
-                for(var x = 0;x < w; x++){
+            //d_search是深度优先搜索
+            var flag = [];
+            function initArr(w,h){//初始化标记数组
+              for(var x = 0;x < w; x++){
                     flag[x] = [];
                     for(var y = 0 ; y < h ; y++){
                         flag[x][y] = false;
                     }
                 }
+            }
+            
+            function d_search(tu,w,h,x,y,isFirst){//深度优先搜索
+              if(!isLegal(x,y,w,h)){//如果该点（i，j）不合法，退出递归
+                return;
+              }
+              if(!!isFirst){
+                initArr(w,h);
+                flag[x][y] = true;
+              }
+              for(var i=0;i<dir.length;i++){
+                  var nextX = x + dir[i][0];
+                  var nextY = y + dir[i][1];
+                  if(!!isLegal(nextX,nextY,w,h)){
+                    if(!flag[nextX][nextY]){
+                      flag[nextX][nextY] = true;
+                      if(tu[nextX][nextY] === tu[x][y]){//如果相邻的位置颜色相同
+                        d_search(tu,w,h,nextX,nextY,false);//以该位置向四周搜索
+                      }
+                    }
+                  }
+              }
+              tu[x][y] = 0;//递归的回退操作
+              createTu(tu,'chart');//递归的回退操作
+            }
+            function g_search(tu,w,h,i,j){//tu是一个二维矩阵,width是矩阵的单位长度，h是单位高度,其中tu[0][0]=1表示图中（0,0）这个点是第1号颜色,i,j是起始点
+                var next_i,
+                    next_j,
+                    nextPoint={},
+                    nowPoint={},//现在要处理的点
+                    isInQueue = [],//记录在进过队列的点
+                    queue = [];//start_i是宽度的遍历索引,start_j是高度的遍历索引，其中i<w ,j<h,flag是标志图中每个点是否被访问的数组,queue是队列数组
+                //初始化标记数组为未访问
+                initArr();
                 var startPoint = {
                     x: i,
                     y: j,
@@ -83,7 +108,6 @@
           
            //渲染成图
            function createTu(tuArr,id){//生成图,id是插入的dom的id
-              var colorArr = ['#333333','#FFFAFA','#FFF68F','#FFEFD5','#FFE4E1','#FFDEAD','#FFC1C1'];//初始化六种颜色
               var html = "<table>"
               for(var i=0;i<tuArr.length;i++){
                 html+="<tr>";
@@ -104,12 +128,24 @@
                 x = !!x ? parseInt(x): null;
                 y = !!y ? parseInt(y): null;
                 if(x!=null && y!=null){
-                    createTu(g_search(testArr,testArr.length,testArr[0].length,x,y));
+                    //createTu(g_search(testArr,testArr.length,testArr[0].length,x,y));
+                    d_search(testArr,testArr.length,testArr[0].length,x,y,true);
                 }
            }
 
             //测试数据
-            var testArr = [[1,1,2,3,1],[1,3,5,1,1],[2,4,2,2,1]];
+           
+           function createRadomArr(w,h){
+              var testArr = [];
+              for(var i = 0;i < w;i++){
+                testArr[i] = [];
+                for(var j = 0;j < h; j++){
+                  testArr[i].push(Math.floor(Math.random()*colorArr.length)+1);
+                }   
+              }
+              return testArr;
+           }
+           var testArr = createRadomArr(10,20);//生成100*100的
            createTu(testArr,"chart")
         </script>
     </body>
